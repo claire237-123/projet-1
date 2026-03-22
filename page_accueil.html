@@ -1,0 +1,280 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>NGOUM MANAGEMENT - Gestion des Notes</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&display=swap" rel="stylesheet" />
+
+  <style>
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      font-family: 'Inter', sans-serif;
+    }
+
+    body {
+      line-height: 1.6;
+      color: #2e5939;
+      background-color: #f2fdf5;
+    }
+
+    .container {
+      max-width: 1100px;
+      margin: auto;
+      padding: 0 20px;
+    }
+
+    /* Header */
+    .header {
+      background-color: #6bcf8d;
+      color: white;
+      padding: 20px 0;
+    }
+
+    .logo {
+      font-size: 1.5rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: transform 0.3s ease;
+    }
+
+    .logo:hover {
+      transform: scale(1.05);
+    }
+
+    .nav {
+      display: flex;
+      gap: 15px;
+    }
+
+    .nav a {
+      color: white;
+      text-decoration: none;
+      font-weight: 500;
+      transition: color 0.3s;
+    }
+
+    .nav a:hover {
+      color: #dff9eb;
+    }
+
+    .menu-toggle {
+      display: none;
+      font-size: 1.8rem;
+      background: none;
+      border: none;
+      color: white;
+      cursor: pointer;
+    }
+
+    .header .container {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+    }
+
+    /* Hero */
+    .hero {
+      background-color: #e0f7e9;
+      padding: 60px 0;
+    }
+
+    .hero-content {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .hero .text {
+      flex: 1 1 100%;
+      text-align: center;
+    }
+
+    .hero h2 {
+      font-size: 2rem;
+      color: #2e5939;
+    }
+
+    .btn {
+      display: inline-block;
+      background-color: #4CAF50;
+      color: white;
+      padding: 12px 24px;
+      margin-top: 20px;
+      text-decoration: none;
+      border-radius: 5px;
+      transition: transform 0.3s ease, background-color 0.3s ease;
+    }
+
+    .btn:hover {
+      transform: scale(1.05);
+      background-color: #45a049;
+    }
+
+    /* Features */
+    .features {
+      padding: 60px 0;
+      background-color: #f6fdf8;
+    }
+
+    .features h3 {
+      text-align: center;
+      margin-bottom: 40px;
+      color: #2e5939;
+      font-size: 1.8rem;
+    }
+
+    .feature-list {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 30px;
+      justify-content: center;
+    }
+
+    .feature {
+      flex: 1 1 250px;
+      background-color: #d6f5e3;
+      padding: 20px;
+      border-radius: 10px;
+      text-align: center;
+      box-shadow: 0 2px 6px rgba(0, 0, 0, 0.05);
+    }
+
+    .feature h4 {
+      margin-bottom: 10px;
+      color: #3a7e5c;
+    }
+
+    .footer {
+      background-color: #6bcf8d;
+      color: white;
+      text-align: center;
+      padding: 20px 0;
+      margin-top: 40px;
+    }
+
+    /* Scroll Animations */
+    .animate-on-scroll {
+      opacity: 0;
+      transform: translateY(30px);
+      transition: opacity 0.6s ease, transform 0.6s ease;
+    }
+
+    .animate-on-scroll.visible {
+      opacity: 1;
+      transform: translateY(0);
+    }
+
+    /* Responsive */
+    @media (max-width: 768px) {
+      .hero-content {
+        flex-direction: column;
+        text-align: center;
+      }
+
+      .nav {
+        display: none;
+        flex-direction: column;
+        gap: 10px;
+        align-items: center;
+        margin-top: 10px;
+      }
+
+      .nav.active {
+        display: flex;
+      }
+
+      .menu-toggle {
+        display: block;
+      }
+
+      .header .container {
+        flex-direction: column;
+        align-items: flex-start;
+      }
+    }
+  </style>
+</head>
+<body>
+
+  <header class="header">
+    <div class="container">
+      <h1 class="logo">NGOUM MANAGEMENT</h1>
+      <button class="menu-toggle" aria-label="Ouvrir le menu">&#9776;</button>
+      <nav class="nav">
+        <a href="#">A propos</a>
+        <a href="#">Connexion</a>
+      </nav>
+    </div>
+  </header>
+
+  <section class="hero">
+    <div class="container hero-content">
+      <div class="text animate-on-scroll">
+        <h2>Gérez vos notes facilement et efficacement</h2>
+        <a href="inscription.html" class="btn">Commencer maintenant</a>
+      </div>
+    </div>
+  </section>
+
+  <section class="features">
+    <div class="container">
+      <h3 class="animate-on-scroll">Fonctionnalités principales</h3>
+      <div class="feature-list">
+        <div class="feature animate-on-scroll">
+          <h4>Suivi des notes</h4>
+          <p>Visualisez les performances en temps réel.</p>
+        </div>
+        <div class="feature animate-on-scroll">
+          <h4>Export PDF</h4>
+          <p>Exportez les bulletins et relevés facilement.</p>
+        </div>
+        <div class="feature animate-on-scroll">
+          <h4>Accès sécurisé</h4>
+          <p>Connexion par rôle : étudiant, prof, admin.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <footer class="footer">
+    <div class="container">
+      <p>&copy; 2025 NGOUM MANAGEMENT. Tous droits réservés.</p>
+    </div>
+  </footer>
+
+  <!-- JavaScript pour animation au scroll -->
+  <script>
+    document.addEventListener("DOMContentLoaded", function () {
+      const elements = document.querySelectorAll(".animate-on-scroll");
+
+      const observer = new IntersectionObserver((entries) => {
+        entries.forEach(entry => {
+          if (entry.isIntersecting) {
+            entry.target.classList.add("visible");
+          }
+        });
+      }, {
+        threshold: 0.1
+      });
+
+      elements.forEach(el => observer.observe(el));
+    });
+  </script>
+
+  <!-- JavaScript pour menu responsive -->
+  <script>
+    const toggleBtn = document.querySelector('.menu-toggle');
+    const nav = document.querySelector('.nav');
+
+    toggleBtn.addEventListener('click', () => {
+      nav.classList.toggle('active');
+    });
+  </script>
+
+</body>
+</html>

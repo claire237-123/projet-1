@@ -1,0 +1,29 @@
+# Fichiers système
+.DS_Store
+Thumbs.db
+*.swp
+*.swo
+*~
+
+# IDE
+.vscode/
+.idea/
+*.sublime-project
+*.sublime-workspace
+
+# Fichiers sensibles
+.env
+.env.local
+*.pem
+*.key
+
+# PHP
+composer.lock
+
+# Base de données (optionnel - décommenter si vous ne voulez pas les commits)
+# *.sql
+
+# Fichiers temporaires
+tmp/
+temp/
+cache/
