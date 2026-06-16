@@ -1,120 +1,218 @@
--- ========================================
--- BASE DE DONNÉES : gestion_notes
--- ========================================
+<?php
+session_start();
 
--- ========== TABLE 1 : UTILISATEURS ==========
--- Contient tous les utilisateurs : étudiants, formateurs, administrateurs
-CREATE TABLE IF NOT EXISTS utilisateurs (
-    id INT AUTO_INCREMENT PRIMARY KEY,
-    nom VARCHAR(100) NOT NULL,
-    sexe ENUM('masculin', 'féminin') DEFAULT 'masculin',
-    email VARCHAR(120) UNIQUE NOT NULL,
-    mot_de_passe VARCHAR(255) NOT NULL,
-    role ENUM('administrateur', 'formateur', 'etudiant') NOT NULL,
-    date_inscription TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    statut_scolarite ENUM('en_cours', 'termine') DEFAULT 'en_cours',
-    INDEX idx_role (role),
-    INDEX idx_email (email)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8 COLLATE=utf8_general_ci;
+/* =========================
+   PROTECTION ÉTUDIANT
+========================= */
+if (!isset($_SESSION['utilisateur_id']) || $_SESSION['role'] !== 'etudiant') {
+    header("Location: connexion.php");
+    exit;
+}
 
--- ========== TABLE 2 : CLASSES ==========
--- Les promotions/classes disponibles
-CREATE TABLE IF NOT EXISTS classes (
-    id INT AUTO_INCREMENT PRIMARY KEY,
-    nom VARCHAR(100) UNIQUE NOT NULL,
-    scolarite DECIMAL(10, 2) DEFAULT 0,
-    INDEX idx_nom (nom)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8 COLLATE=utf8_general_ci;
+/* =========================
+   CONNEXION BD
+========================= */
+try {
+    $pdo = new PDO("mysql:host=localhost;dbname=gestion_notes;charset=utf8", "root", "");
+    $pdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
+} catch (PDOException $e) {
+    die("Erreur BD : " . $e->getMessage());
+}
 
--- ========== TABLE 3 : ETUDIANTS_CLASSES ==========
--- Relation entre étudiants et classes (Many to Many)
-CREATE TABLE IF NOT EXISTS etudiants_classes (
-    id INT AUTO_INCREMENT PRIMARY KEY,
-    etudiant_id INT NOT NULL,
-    classe_id INT NOT NULL,
-    date_inscription TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    FOREIGN KEY (etudiant_id) REFERENCES utilisateurs(id) ON DELETE CASCADE,
-    FOREIGN KEY (classe_id) REFERENCES classes(id) ON DELETE CASCADE,
-    UNIQUE KEY unique_etudiant_classe (etudiant_id, classe_id)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8 COLLATE=utf8_general_ci;
+$etudiant_id = $_SESSION['utilisateur_id'];
+$message = "";
 
--- ========== TABLE 4 : MATIERES ==========
--- Les matières enseignées, associées à un formateur
-CREATE TABLE IF NOT EXISTS matieres (
-    id INT AUTO_INCREMENT PRIMARY KEY,
-    nom VARCHAR(100) NOT NULL,
-    formateur_id INT NOT NULL,
-    coefficient INT DEFAULT 1,
-    FOREIGN KEY (formateur_id) REFERENCES utilisateurs(id) ON DELETE CASCADE,
-    INDEX idx_formateur (formateur_id)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8 COLLATE=utf8_general_ci;
+/* =========================
+   PASSAGE EXAMEN
+========================= */
+if (isset($_POST['passer_examen'])) {
 
--- ========== TABLE 5 : NOTES ==========
--- Les notes des étudiants par matière
-CREATE TABLE IF NOT EXISTS notes (
-    id INT AUTO_INCREMENT PRIMARY KEY,
-    etudiant_id INT NOT NULL,
-    matiere_id INT NOT NULL,
-    matiere VARCHAR(100),
-    note FLOAT,
-    statut ENUM('en_attente', 'validee', 'refusee') DEFAULT 'en_attente',
-    date_ajout TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    FOREIGN KEY (etudiant_id) REFERENCES utilisateurs(id) ON DELETE CASCADE,
-    FOREIGN KEY (matiere_id) REFERENCES matieres(id) ON DELETE CASCADE,
-    UNIQUE KEY unique_etudiant_matiere (etudiant_id, matiere_id),
-    INDEX idx_etudiant (etudiant_id),
-    INDEX idx_matiere (matiere_id),
-    INDEX idx_statut (statut)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8 COLLATE=utf8_general_ci;
+    $examen_id = $_POST['examen_id'];
 
--- ========== TABLE 6 : FORMATEURS_ETUDIANTS ==========
--- Relation entre formateurs et étudiants (qui suit qui)
-CREATE TABLE IF NOT EXISTS formateurs_etudiants (
-    id INT AUTO_INCREMENT PRIMARY KEY,
-    formateur_id INT NOT NULL,
-    etudiant_id INT NOT NULL,
-    date_affectation TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    FOREIGN KEY (formateur_id) REFERENCES utilisateurs(id) ON DELETE CASCADE,
-    FOREIGN KEY (etudiant_id) REFERENCES utilisateurs(id) ON DELETE CASCADE,
-    UNIQUE KEY unique_formateur_etudiant (formateur_id, etudiant_id),
-    INDEX idx_formateur (formateur_id),
-    INDEX idx_etudiant (etudiant_id)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8 COLLATE=utf8_general_ci;
+    // Vérifier si déjà passé
+    $check = $pdo->prepare("
+        SELECT id 
+        FROM resultats_examens 
+        WHERE etudiant_id = ? AND examen_id = ?
+    ");
+    $check->execute([$etudiant_id, $examen_id]);
 
--- ========== TABLE 7 : PAIEMENTS ==========
--- Historique des paiements des étudiants
-CREATE TABLE IF NOT EXISTS paiements (
-    id INT AUTO_INCREMENT PRIMARY KEY,
-    etudiant_id INT NOT NULL,
-    montant DECIMAL(10, 2) NOT NULL,
-    date_paiement TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    FOREIGN KEY (etudiant_id) REFERENCES utilisateurs(id) ON DELETE CASCADE,
-    INDEX idx_etudiant (etudiant_id),
-    INDEX idx_date (date_paiement)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8 COLLATE=utf8_general_ci;
+    if ($check->fetch()) {
+        $message = "⚠️ Vous avez déjà passé cet examen.";
+    } else {
 
--- ========================================
--- INSERTION DE DONNÉES D'EXEMPLE
--- ========================================
+        // Récupérer les questions (IMPORTANT : pas de matiere_id ici)
+        $stmt = $pdo->prepare("
+            SELECT * 
+            FROM questions 
+            WHERE examen_id = ?
+        ");
+        $stmt->execute([$examen_id]);
+        $questions = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
--- Ajouter un administrateur
-INSERT INTO utilisateurs (nom, sexe, email, mot_de_passe, role, date_inscription) 
-VALUES ('Admin Principal', 'masculin', 'admin@example.com', '$2y$10$...', 'administrateur', NOW());
+        $score = 0;
+        $total = count($questions);
 
--- Ajouter des formateurs
-INSERT INTO utilisateurs (nom, sexe, email, mot_de_passe, role, date_inscription)
-VALUES 
-('Formateur 1', 'masculin', 'formateur1@example.com', '$2y$10$...', 'formateur', NOW()),
-('Formateur 2', 'féminin', 'formateur2@example.com', '$2y$10$...', 'formateur', NOW());
+        foreach ($questions as $q) {
 
--- Ajouter des étudiants
-INSERT INTO utilisateurs (nom, sexe, email, mot_de_passe, role, date_inscription)
-VALUES 
-('Etudiant 1', 'masculin', 'etudiant1@example.com', '$2y$10$...', 'etudiant', NOW()),
-('Etudiant 2', 'féminin', 'etudiant2@example.com', '$2y$10$...', 'etudiant', NOW());
+            $reponse = $_POST['q_'.$q['id']] ?? '';
 
--- Ajouter des classes
-INSERT INTO classes (nom, scolarite) 
-VALUES 
-('L1 Informatique', 150000),
-('M1 Réseaux', 200000);
+            // Correction simple
+            if (trim(strtolower($reponse)) == trim(strtolower($q['bonne_reponse']))) {
+                $score++;
+            }
+
+            // Sauvegarde réponse étudiant
+            $save = $pdo->prepare("
+                INSERT INTO reponses_etudiants 
+                (etudiant_id, question_id, reponse, note)
+                VALUES (?, ?, ?, ?)
+            ");
+
+            $save->execute([
+                $etudiant_id,
+                $q['id'],
+                $reponse,
+                ($reponse == $q['bonne_reponse']) ? 1 : 0
+            ]);
+        }
+
+        // Calcul note finale sur 20
+        $note_finale = $total > 0 ? ($score / $total) * 20 : 0;
+
+        // Sauvegarde résultat final
+        $insert = $pdo->prepare("
+            INSERT INTO resultats_examens 
+            (etudiant_id, examen_id, note_finale)
+            VALUES (?, ?, ?)
+        ");
+
+        $insert->execute([
+            $etudiant_id,
+            $examen_id,
+            $note_finale
+        ]);
+
+        $message = "✅ Examen terminé ! Note : " . round($note_finale, 2) . "/20";
+    }
+}
+
+/* =========================
+   LISTE EXAMENS
+========================= */
+$examens = $pdo->query("
+    SELECT * 
+    FROM examens 
+    ORDER BY date_creation DESC
+")->fetchAll(PDO::FETCH_ASSOC);
+?>
+
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<title>Examens</title>
+
+<style>
+body {
+    font-family: Arial;
+    background: #f1f8e9;
+    padding: 20px;
+}
+
+h2 { color: #2e7d32; }
+
+.box {
+    background: white;
+    padding: 15px;
+    margin-bottom: 20px;
+    border-radius: 8px;
+}
+
+.question {
+    margin: 10px 0;
+    padding: 10px;
+    border-left: 4px solid #4CAF50;
+}
+
+button {
+    padding: 8px 12px;
+    background: #4CAF50;
+    color: white;
+    border: none;
+    cursor: pointer;
+}
+
+.msg {
+    background: #fff;
+    padding: 10px;
+    border-left: 5px solid #4CAF50;
+    margin-bottom: 15px;
+}
+</style>
+</head>
+
+<body>
+
+<h2>📚 Examens disponibles</h2>
+
+<p><a href="etudiantpage.php">← Retour</a></p>
+
+<?php if ($message): ?>
+<div class="msg"><?= $message ?></div>
+<?php endif; ?>
+
+<?php foreach ($examens as $examen): ?>
+
+<div class="box">
+
+    <h3><?= htmlspecialchars($examen['titre']) ?></h3>
+    <p><?= htmlspecialchars($examen['description']) ?></p>
+
+    <?php
+    // Récupération questions (CORRECTE)
+    $stmt = $pdo->prepare("
+        SELECT * 
+        FROM questions 
+        WHERE examen_id = ?
+    ");
+    $stmt->execute([$examen['id']]);
+    $questions = $stmt->fetchAll(PDO::FETCH_ASSOC);
+    ?>
+
+    <form method="POST">
+
+        <input type="hidden" name="examen_id" value="<?= $examen['id'] ?>">
+
+        <?php foreach ($questions as $q): ?>
+            <div class="question">
+                <strong><?= htmlspecialchars($q['question']) ?></strong><br>
+
+                <?php if ($q['type'] == 'qcm'): ?>
+                    <input type="text" name="q_<?= $q['id'] ?>" placeholder="Réponse">
+                <?php elseif ($q['type'] == 'vf'): ?>
+                    <select name="q_<?= $q['id'] ?>">
+                        <option value="vrai">Vrai</option>
+                        <option value="faux">Faux</option>
+                    </select>
+                <?php else: ?>
+                    <textarea name="q_<?= $q['id'] ?>"></textarea>
+                <?php endif; ?>
+
+            </div>
+        <?php endforeach; ?>
+
+        <?php if (count($questions) > 0): ?>
+            <button type="submit" name="passer_examen">Terminer</button>
+        <?php else: ?>
+            <p>Aucune question disponible</p>
+        <?php endif; ?>
+
+    </form>
+
+</div>
+
+<?php endforeach; ?>
+
+</body>
+</html>

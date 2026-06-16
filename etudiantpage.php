@@ -2,7 +2,7 @@
 session_start();
 require 'condb.php';
 
-// Protection : uniquement pour étudiants
+// Protection : uniquement pour étudiants 
 if (!isset($_SESSION['utilisateur_id']) || $_SESSION['role'] !== 'etudiant') {
     header("Location: connexion.php");
     exit;
@@ -132,8 +132,9 @@ foreach ($matieres as $m => $notes) {
   <div class="content">
     <h1>Bienvenue <?= $nom ?></h1>
     <p>⚙️ Besoin de voir et télécharger ton relevé de notes ?</p>
+    <a href="etudiant_evaluations.php">Évaluation</a>
     <a href="resultats.php">📄 Mon relevé</a><br>
-    <a href="dashboard.php">← Retour</a>
+    <a href="deconnexion.php">← Déconnexion</a>
   </div>
 </body>
 </html>

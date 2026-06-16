@@ -175,6 +175,7 @@ if ($selected_id) {
 <div class="container">
 <h1>📚 Gestion des notes</h1>
 <p> <a href="formateurpage.php">Retour</a></p>
+<p><a href="resultats_examens_formateur.php">Examens en ligne</a></p>
 
 <?php if ($message): ?><div class="message"><?= htmlspecialchars($message) ?></div><?php endif; ?>
 

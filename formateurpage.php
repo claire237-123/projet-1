@@ -100,7 +100,8 @@ $nom = htmlspecialchars($_SESSION['nom']);
     <h1>Bienvenue Formateur <?= $nom ?></h1>
     <p>Vous pouvez gérer les notes et les étudiants.</p>
     <p><a href="formateur_notes.php">📘 Gérer les notes</a></p>
-    <p><a href="dashboard.php">🏠 Retour au tableau de bord</a></p>
+    <p><a href="create_evaluation.php">Évaluation en ligne</a></p>
+    <p><a href="deconnexion.php"> Déconnexion</a></p>
   </div>
 </body>
 </html>

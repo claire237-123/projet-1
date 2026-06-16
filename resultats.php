@@ -42,21 +42,25 @@ if (!$classe) {
     die("Aucune classe associée. Contactez l'administration.");
 }
 
-// 🔹 Récupérer notes validées (tolérance sur statut)
+/* =========================
+   RÉCUPÉRER NOTES VALIDÉES
+========================= */
+
 $stmt = $pdo->prepare("
-    SELECT m.nom AS matiere, 
-           COALESCE(n.note, 0) AS note, 
-           COALESCE(m.coefficient, 1) AS coefficient
+    SELECT
+        m.nom AS matiere,
+        COALESCE(n.note,0) AS note,
+        COALESCE(m.coefficient,1) AS coefficient
     FROM notes n
-    INNER JOIN matieres m ON n.matiere_id = m.id
+    INNER JOIN matieres m
+        ON n.matiere_id = m.id
     WHERE n.etudiant_id = ?
       AND n.statut IN ('valide','validee','validé')
-      AND m.classe_id = ?
     ORDER BY m.nom ASC
 ");
-$stmt->execute([$etudiant_id, $classe['id']]);
-$notes = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
+$stmt->execute([$etudiant_id]);
+$notes = $stmt->fetchAll(PDO::FETCH_ASSOC);
 // 🔹 Calcul moyenne pondérée
 $total = 0;
 $totalCoeff = 0;

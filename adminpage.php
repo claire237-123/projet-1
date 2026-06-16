@@ -97,7 +97,7 @@
     $nom = isset($_SESSION['nom']) ? htmlspecialchars($_SESSION['nom']) : 'Nom non défini';
     ?>
     <div class="content">
-        <h1>Bienvenue Admin <?= htmlspecialchars($nom) ?></h1>
+        <h1>Bienvenue <?= htmlspecialchars($nom) ?></h1>
         <p>Vous avez accès à toutes les fonctionnalités d'administration.</p>
         <ul>
             <li><a href="admin_utilisateurs.php">🧑‍💼 Gérer les utilisateurs</a></li>
@@ -107,7 +107,7 @@
             <li><a href="classegestion.php">Modalités</a></li>
             <li><a href="admin_classes.php">affecter des étudiants à leurs filières</a></li>
         </ul>
-        <a href="dashboard.php">Retour au tableau de bord</a>
+        <a href="deconnexion.php">Déconnexion</a>
     </div>
 </body>
 </html>
